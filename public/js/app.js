@@ -22,7 +22,11 @@ const options = {
   transports: ["websocket"],
 };
 
-const socket = io("http://localhost:2020");
+const socket = io(
+  window.location.hostname === "localhost"
+    ? "http://localhost:2020"
+    : window.location.origin
+);
 
 socket.on("connect", () => {
   console.log("connected!");
