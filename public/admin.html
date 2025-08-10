@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="shortcut icon" type="image/png" href="video.png" />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+      integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w=="
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="./css/reset.css" />
+
+    <link rel="stylesheet" href="./css/admin.css" />
+    <title>Watch Party</title>
+  </head>
+
+  <body>
+    <!-- Top Header -->
+    <div class="top-header">
+      <h3 class="room"></h3>
+      <div class="header-controls">
+        <a id="leave" href="#">Leave Room</a>
+        <i class="fas fa-bars menu"></i>
+        <i class="fas fa-times Xmenu"></i>
+      </div>
+    </div>
+
+    <!-- Users List Header -->
+    <header>
+      <ul class="users"></ul>
+    </header>
+
+    <!-- Video URL Input (YouTube style - at top) -->
+    <div class="url-input-section">
+      <form action="" class="firstUser">
+        <input
+          type="text"
+          name="videoUrl"
+          id="videoUrl"
+          placeholder="Paste your video URL here"
+          required
+        />
+        <button type="submit" class="btn">Play</button>
+        <button type="button" class="btn" id="addVideoBtn">
+          Play from Drive
+        </button>
+      </form>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Video Section -->
+      <div class="video-section">
+        <div class="container">
+          <!-- Video Player -->
+          <div class="video-container"></div>
+
+          <!-- Video Controls -->
+          <div class="video-controls-section">
+            <div class="container-btn">
+              <a href="#" class="play-video" title="Play video">
+                <i class="fas fa-play"></i>
+                Play
+              </a>
+              <a href="#" class="pause-video" title="Pause video">
+                <i class="fas fa-pause"></i>
+                Pause
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Toggle Button -->
+      <button class="chat-toggle-btn" id="chatToggleBtn">
+        <i class="fas fa-comments"></i>
+        <span>Chat</span>
+      </button>
+
+      <!-- Chat Section -->
+      <div class="chat-section" id="chatSection">
+        <div class="chat-header">
+          <h2>Chat</h2>
+          <button class="chat-close-btn" id="chatCloseBtn">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div id="chatContainer">
+          <ul id="chatBoard"></ul>
+          <form id="chatForm">
+            <input
+              type="text"
+              name="chat"
+              id="chat"
+              placeholder="Type your message..."
+            />
+            <button type="submit" class="btn">Send</button>
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/qs/6.10.1/qs.min.js"
+      integrity="sha512-aTKlYRb1QfU1jlF3k+aS4AqTpnTXci4R79mkdie/bp6Xm51O5O3ESAYhvg6zoicj/PD6VYY0XrYwsWLcvGiKZQ=="
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+      integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+      crossorigin="anonymous"
+    ></script>
+    <script src="js/app.js"></script>
+    <script src="js/admin.js"></script>
+  </body>
+</html>
