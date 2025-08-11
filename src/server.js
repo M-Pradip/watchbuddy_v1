@@ -11,6 +11,10 @@ const socket = require("socket.io");
 // const io = socket(server, {
 // 	cors: { origin: '*' },
 // });
+const leoProfanity = require("leo-profanity");
+
+// Add custom words
+leoProfanity.add(["mula", "saag", "abc", "xyz"]);
 const io = new socket.Server(server);
 const {
   userJoin,
@@ -65,7 +69,13 @@ io.on("connection", (socket) => {
 
   socket.on("chatMessage", (msg) => {
     const user = currentUser(socket.id);
-    io.to(user.room).emit("message", messageTemplate(user.username, msg));
+    if (!user) return;
+
+    // Clean the message
+    const cleanMsg = leoProfanity.clean(msg);
+
+    // Broadcast cleaned message
+    io.to(user.room).emit("message", messageTemplate(user.username, cleanMsg));
   });
 
   socket.on("videoUrl", (videoUrl) => {
