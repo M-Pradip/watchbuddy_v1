@@ -48,6 +48,8 @@ document.addEventListener("DOMContentLoaded", () => {
         provider: "google",
         options: {
           redirectTo: window.location.origin + "/index.html",
+          scopes:
+            "openid profile email https://www.googleapis.com/auth/drive.readonly",
         },
       });
 

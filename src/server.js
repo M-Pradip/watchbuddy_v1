@@ -21,6 +21,10 @@ const {
   removeAllUsersFromRoom,
 } = require("./utilis/user");
 const messageTemplate = require("./utilis/messages");
+const leoProfanity = require("leo-profanity");
+
+// Add custom words
+leoProfanity.add(["mula", "saag", "abc", "xyz"]);
 
 const errorHandler = require("./errors-handlers/500");
 const notFound = require("./errors-handlers/404");
@@ -65,7 +69,12 @@ io.on("connection", (socket) => {
 
   socket.on("chatMessage", (msg) => {
     const user = currentUser(socket.id);
-    io.to(user.room).emit("message", messageTemplate(user.username, msg));
+
+    const cleanedMsg = leoProfanity.clean(msg);
+    io.to(user.room).emit(
+      "message",
+      messageTemplate(user.username, cleanedMsg)
+    );
   });
 
   socket.on("videoUrl", (videoUrl) => {

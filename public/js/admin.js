@@ -262,3 +262,100 @@ document.addEventListener("DOMContentLoaded", function () {
   // Debug logging (remove in production)
   console.log("Admin chat sidebar initialized");
 });
+
+console.log("authManager:", window.authManager);
+console.log("googleAccessToken:", window.authManager?.googleAccessToken);
+
+let pickerApiLoaded = false;
+let oauthToken = null; // You'll assign this from your Supabase provider_token
+
+function loadPicker() {
+  gapi.load("picker", onPickerApiLoad);
+}
+
+function onPickerApiLoad() {
+  pickerApiLoaded = true;
+  createPicker();
+}
+
+function createPicker() {
+  if (!pickerApiLoaded) {
+    console.error("Picker API not loaded");
+    return;
+  }
+  if (!oauthToken) {
+    console.error("OAuth token missing");
+    return;
+  }
+  const view = new google.picker.DocsView(google.picker.ViewId.DOCS);
+  view.setIncludeFolders(true);
+  view.setSelectFolderEnabled(true);
+
+  const picker = new google.picker.PickerBuilder()
+    .enableFeature(google.picker.Feature.NAV_HIDDEN)
+    .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+    .setAppId("924210769573")
+    .setOAuthToken(oauthToken)
+    .setOrigin(window.location.protocol + "//" + window.location.host) // e.g., http://localhost:2020
+    .setRelayUrl(window.location.protocol + "//" + window.location.host) // e.g., http://localhost:2020
+    .addView(view)
+    .addView(new google.picker.DocsUploadView())
+    .setCallback(pickerCallback)
+    .build();
+
+  picker.setVisible(true);
+}
+// function pickerCallback(data) {
+//   if (data.action === google.picker.Action.PICKED) {
+//     const files = data.docs;
+//     console.log("Picked files:", files);
+
+//     const file = files[0];
+//     const videoContainer = document.querySelector(".video-container");
+//     if (videoContainer) {
+//       // Use embedUrl provided by picker instead of manual construction
+//       videoContainer.innerHTML = `<iframe src="${file.embedUrl}" width="100%" height="480" allow="autoplay" allowfullscreen></iframe>`;
+//     }
+
+//     // Emit the video URL to the server so others can load it
+//     socket.emit("video-selected", { url: file.embedUrl });
+//   }
+// }
+// admin.js -> CORRECTED VERSION
+
+function pickerCallback(data) {
+  if (data.action === google.picker.Action.PICKED) {
+    const file = data.docs[0];
+    const fileId = file.id; // 1. Get the unique File ID from the picker result.
+
+    // 2. Construct the correct URL for embedding.
+    const correctEmbedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+
+    // 3. Emit the newly constructed, correct URL to all users.
+    socket.emit("videoUrl", correctEmbedUrl);
+
+    // 4. Update the host's video container with the correct URL.
+    // The "video" event from the server will update it for viewers.
+    document.querySelector(".video-container").innerHTML = `
+      <iframe 
+        src="${correctEmbedUrl}" 
+        width="100%" height="480" 
+        allow="autoplay"
+        allowfullscreen 
+        frameborder="0"
+      ></iframe>`;
+  }
+}
+
+document.getElementById("addVideoBtn").addEventListener("click", () => {
+  // Get the token from AuthManager
+  oauthToken = window.authManager.googleAccessToken;
+
+  if (!oauthToken) {
+    alert("Please log in with Google to use Drive picker.");
+    return;
+  }
+
+  loadPicker();
+});
+console.log("OAuth Token for Picker:", oauthToken);
