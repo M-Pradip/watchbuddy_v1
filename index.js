@@ -2,7 +2,8 @@
 
 const { start } = require("./src/server");
 
-// io.listen(server);
-
 require("dotenv").config();
-start(process.env.PORT);
+
+const port = process.env.PORT || 2020; // fallback for local dev
+
+start(port);

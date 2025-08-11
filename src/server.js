@@ -188,7 +188,7 @@ module.exports = {
     if (!port) {
       throw new Error("Missing Port");
     }
-    server.listen(port, () => {
+    server.listen(port, "0.0.0.0", () => {
       console.log(`Server Up on ${port}`);
     });
   },
