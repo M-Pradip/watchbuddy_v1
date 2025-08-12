@@ -8,6 +8,9 @@ const cors = require("cors");
 const morgan = require("morgan");
 const path = require("path");
 const socket = require("socket.io");
+const multer = require("multer");
+const { storage } = require("../cloudinaryConfig"); // ../ because config is in root
+const upload = multer({ storage });
 // const io = socket(server, {
 // 	cors: { origin: '*' },
 // });
@@ -34,6 +37,12 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "../public")));
+
+// ✅ Upload route for host video
+app.post("/upload", upload.single("video"), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+  res.json({ url: req.file.path }); // Cloudinary URL
+});
 
 // Track hosts that are refreshing
 const refreshingHosts = new Set();

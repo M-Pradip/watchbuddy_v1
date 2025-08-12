@@ -4,15 +4,14 @@ const joinRoom = document.querySelector("#joinRoom");
 const chatBoard = document.querySelector("#chatBoard");
 const chat = document.querySelector("#chat");
 const chatForm = document.querySelector("#chatForm");
-const video = document.querySelector("#video");
 const videoContainer = document.querySelector(".video-container");
 const playVideo = document.querySelector(".play-video");
 const pauseVideo = document.querySelector(".pause-video");
 
 const firstUser = document.querySelector(".firstUser");
-
 const roomName = document.querySelector(".room");
 const usersList = document.querySelector(".users");
+const addVideoBtn = document.getElementById("addVideoBtn");
 
 const { username, room } = Qs.parse(location.search, {
   ignoreQueryPrefix: true,
@@ -108,33 +107,61 @@ socket.on("message", (message) => {
   }
 });
 
+// Improved video handler to support YouTube embeds and direct video files
 socket.on("video", (link) => {
-  videoContainer.innerHTML = `<iframe id='video' src=${link} allowfullscreen allow="autoplay">
-                </iframe>`;
+  const isYouTube = /youtube\.com|youtu\.be|embed/.test(link);
 
-  /* video */
+  if (isYouTube) {
+    videoContainer.innerHTML = `<iframe id='video' src="${link}" allowfullscreen allow="autoplay"></iframe>`;
 
-  $("a.play-video").click(function () {
-    socket.emit("play");
-  });
+    $("a.play-video")
+      .off("click")
+      .on("click", function () {
+        socket.emit("play");
+      });
+    socket.off("playVideo").on("playVideo", () => {
+      $("#video")[0].contentWindow.postMessage(
+        '{"event":"command","func":"playVideo","args":""}',
+        "*"
+      );
+    });
 
-  socket.on("playVideo", () => {
-    $("#video")[0].contentWindow.postMessage(
-      '{"event":"command","func":"' + "playVideo" + '","args":""}',
-      "*"
-    );
-  });
+    $("a.pause-video")
+      .off("click")
+      .on("click", function () {
+        socket.emit("pause");
+      });
+    socket.off("pauseVideo").on("pauseVideo", () => {
+      $("#video")[0].contentWindow.postMessage(
+        '{"event":"command","func":"pauseVideo","args":""}',
+        "*"
+      );
+    });
+  } else {
+    videoContainer.innerHTML = `<video id="video" src="${link}" controls autoplay></video>`;
 
-  $("a.pause-video").click(function () {
-    socket.emit("pause");
-  });
+    $("a.play-video")
+      .off("click")
+      .on("click", function () {
+        socket.emit("play");
+      });
 
-  socket.on("pauseVideo", () => {
-    $("#video")[0].contentWindow.postMessage(
-      '{"event":"command","func":"' + "pauseVideo" + '","args":""}',
-      "*"
-    );
-  });
+    socket.off("playVideo").on("playVideo", () => {
+      const vid = document.getElementById("video");
+      if (vid) vid.play();
+    });
+
+    $("a.pause-video")
+      .off("click")
+      .on("click", function () {
+        socket.emit("pause");
+      });
+
+    socket.off("pauseVideo").on("pauseVideo", () => {
+      const vid = document.getElementById("video");
+      if (vid) vid.pause();
+    });
+  }
 });
 
 // Handle page refresh vs actual leaving
@@ -150,13 +177,8 @@ window.addEventListener("beforeunload", function (e) {
 
 // Handle room termination when host leaves
 socket.on("roomTerminated", (data) => {
-  // Show alert and immediately redirect
   alert(data.message);
-
-  // Disconnect from socket
   socket.disconnect();
-
-  // Redirect to home page immediately
   window.location.href = "/index.html";
 });
 
@@ -164,7 +186,6 @@ socket.on("roomTerminated", (data) => {
 socket.on("disconnect", (reason) => {
   console.log("Disconnected from server:", reason);
 
-  // If disconnected by server (not by user), redirect to home
   if (reason === "io server disconnect") {
     alert("You have been disconnected from the room.");
     window.location.href = "/index.html";
@@ -179,7 +200,6 @@ document.addEventListener("DOMContentLoaded", function () {
       e.preventDefault();
 
       if (isCurrentUserHost) {
-        // Host is leaving - confirm termination
         if (
           confirm(
             "You are the host. Leaving will terminate the room for all users. Are you sure?"
@@ -189,7 +209,6 @@ document.addEventListener("DOMContentLoaded", function () {
           window.location.href = "/index.html";
         }
       } else {
-        // Regular user leaving
         socket.disconnect();
         window.location.href = "/index.html";
       }
@@ -197,19 +216,15 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-/*________________________ Home Page Styling _____________________ */
-
+// Home Page Styling (menu toggle, etc.)
 const wrap = document.querySelector("#wrap");
-
 if (wrap) {
   wrap.addEventListener("click", () => {
     joinRoom.style.display = "flex";
   });
 }
-
 const menu = document.querySelector(".menu");
 const xMenu = document.querySelector(".Xmenu");
-
 if (menu) {
   menu.addEventListener("click", () => {
     usersList.style.right = "0px";
@@ -221,5 +236,69 @@ if (menu) {
     usersList.style.right = "-1000px";
     menu.style.display = "block";
     xMenu.style.display = "none";
+  });
+}
+
+// Handle Upload Click (Host Only)
+if (addVideoBtn) {
+  addVideoBtn.addEventListener("click", () => {
+    if (!isCurrentUserHost) {
+      alert("Only the host can upload videos.");
+      return;
+    }
+
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "video/*";
+    fileInput.click();
+
+    fileInput.onchange = () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append("video", file);
+
+      // Show progress bar elements here (make sure they exist in DOM)
+      const progressContainer = document.getElementById("uploadProgress");
+      const progressBar = document.getElementById("uploadBar");
+      if (progressContainer && progressBar) {
+        progressContainer.style.display = "block";
+        progressBar.style.width = "0%";
+      }
+
+      const xhr = new XMLHttpRequest();
+
+      xhr.upload.addEventListener("progress", (e) => {
+        if (e.lengthComputable && progressBar) {
+          const percentComplete = (e.loaded / e.total) * 100;
+          progressBar.style.width = percentComplete + "%";
+        }
+      });
+
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+          if (progressContainer) progressContainer.style.display = "none";
+
+          if (xhr.status === 200) {
+            try {
+              const data = JSON.parse(xhr.responseText);
+              if (data.url) {
+                socket.emit("videoUrl", data.url);
+              } else {
+                alert("Upload failed.");
+              }
+            } catch (err) {
+              alert("Error parsing server response.");
+            }
+          } else {
+            alert("Upload failed with status " + xhr.status);
+          }
+        }
+      };
+
+      xhr.open("POST", "/upload", true);
+      xhr.send(formData);
+    };
   });
 }
